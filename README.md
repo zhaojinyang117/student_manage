@@ -79,7 +79,7 @@ python manage.py createsuperuser # 测试数据库中默认有超级用户 usern
 ```bash
 python manage.py runserver
 
-# 使用uv运行
+# 或使用uv运行
 uv run manage.py runserver
 ```
 
