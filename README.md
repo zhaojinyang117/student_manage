@@ -10,7 +10,7 @@
 - **学生管理**：查看学生列表，支持按姓名、学号、班级等进行搜索和筛选
 - **课程管理**：查看课程列表及详情，管理选课学生
 - **班级管理**：查看班级列表及成员，管理班级学生的课程信息
-- **用户界面**：采用苹果风格设计，界面简洁直观，支持响应式布局
+- **用户界面**：采用亚克力风格设计，界面简洁直观，支持响应式布局
 - **高级功能**：
   - 支持背景图片自定义及透明度调节
   - 亚克力（毛玻璃）效果组件
@@ -20,9 +20,9 @@
 ## 技术栈
 
 - **后端**：Django 5.1.7
-- **前端**：原生HTML/CSS/JavaScript，Apple风格设计
+- **前端**：原生HTML/CSS/JavaScript，亚克力风格设计
 - **包管理**：uv
-- **数据库**：SQLite (开发) / PostgreSQL (生产可选)
+- **数据库**：SQLite (开发)
 
 ## 安装指南
 
@@ -59,7 +59,7 @@ source .venv/bin/activate
 4. 安装依赖：
 
 ```bash
-uv pip install -e .
+uv sync
 ```
 
 5. 运行数据库迁移：
@@ -71,7 +71,7 @@ python manage.py migrate
 6. 创建超级用户：
 
 ```bash
-python manage.py createsuperuser
+python manage.py createsuperuser # 测试数据库中默认有超级用户 username:admin. password:123456
 ```
 
 7. 启动开发服务器：
