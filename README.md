@@ -36,14 +36,14 @@
 1. 克隆仓库到本地：
 
 ```bash
-git clone https://github.com/your-username/student-manage.git
+git clone https://github.com/zhaojinyang117/student_manage.git
 cd student-manage
 ```
 
 2. 使用uv创建虚拟环境：
 
 ```bash
-uv venv .venv
+uv venv
 ```
 
 3. 激活虚拟环境：
@@ -78,6 +78,9 @@ python manage.py createsuperuser # 测试数据库中默认有超级用户 usern
 
 ```bash
 python manage.py runserver
+
+# 使用uv运行
+uv run manage.py runserver
 ```
 
 8. 访问系统：
