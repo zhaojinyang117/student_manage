@@ -1,0 +1,475 @@
+/* Django管理界面自定义样式 */
+:root {
+    --primary-color: #0071e3;
+    --primary-hover: #0077ed;
+    --secondary-color: #86868b;
+    --text-color: #1d1d1f;
+    --background-color: #f5f5f7;
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --border-color: #d2d2d7;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --border-radius: 8px;
+    --acrylic-opacity: 0.85;
+    --acrylic-blur: 10px;
+}
+
+/* 全局重置 */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    color: var(--text-color);
+    background-color: var(--background-color);
+    background-image: url('/static/images/bg-default.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    line-height: 1.5;
+}
+
+/* 背景透明度控制 */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: -1;
+}
+
+/* 导航侧边栏 */
+#header {
+    background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+    backdrop-filter: blur(var(--acrylic-blur));
+    -webkit-backdrop-filter: blur(var(--acrylic-blur));
+    color: var(--text-color);
+    padding: 15px 40px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+#header a:link,
+#header a:visited {
+    color: var(--text-color);
+}
+
+#header a:hover,
+#header a:active {
+    color: var(--primary-color);
+}
+
+#branding h1 {
+    font-weight: 600;
+}
+
+#branding h1 a:link,
+#branding h1 a:visited {
+    color: var(--text-color);
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 500;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+/* 侧边栏 */
+.sidebar {
+    background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+    backdrop-filter: blur(var(--acrylic-blur));
+    -webkit-backdrop-filter: blur(var(--acrylic-blur));
+    padding: 20px 0;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.toggle-nav-sidebar {
+    color: var(--text-color);
+    background-color: transparent;
+    border: none;
+    padding: 12px;
+}
+
+#nav-sidebar {
+    padding: 0 20px;
+}
+
+#nav-sidebar .current-model {
+    background-color: rgba(0, 113, 227, 0.1);
+}
+
+#nav-sidebar a {
+    color: var(--text-color);
+    padding: 10px 15px;
+    border-radius: var(--border-radius);
+    transition: background-color 0.2s, color 0.2s;
+}
+
+#nav-sidebar a:hover {
+    background-color: rgba(0, 113, 227, 0.05);
+    color: var(--primary-color);
+}
+
+/* 内容区 */
+#content {
+    background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+    backdrop-filter: blur(var(--acrylic-blur));
+    -webkit-backdrop-filter: blur(var(--acrylic-blur));
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    margin: 20px;
+}
+
+#content-main {
+    padding: 20px;
+}
+
+#content-related {
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: var(--border-radius);
+}
+
+.dashboard #content {
+    width: calc(100% - 40px);
+}
+
+/* 表单样式 */
+.button,
+input[type=submit],
+input[type=button],
+.submit-row input,
+a.button {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius);
+    padding: 10px 15px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.button:hover,
+input[type=submit]:hover,
+input[type=button]:hover,
+.submit-row input:hover,
+a.button:hover {
+    background-color: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+}
+
+.button.default,
+input[type=submit].default,
+.submit-row input.default {
+    background-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.button[disabled],
+input[type=submit][disabled],
+input[type=button][disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.submit-row {
+    background-color: rgba(245, 245, 247, 0.5);
+    border-radius: var(--border-radius);
+    padding: 15px;
+}
+
+input[type=text],
+input[type=password],
+input[type=email],
+input[type=url],
+input[type=number],
+textarea,
+select,
+.vTextField {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type=text]:focus,
+input[type=password]:focus,
+input[type=email]:focus,
+input[type=url]:focus,
+input[type=number]:focus,
+textarea:focus,
+select:focus,
+.vTextField:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.2);
+}
+
+/* 选择框 */
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%231d1d1f' viewBox='0 0 16 16'%3E%3Cpath d='M2 5l6 6 6-6H2z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+    padding-right: 30px;
+}
+
+/* 表格样式 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead th {
+    background-color: rgba(245, 245, 247, 0.8);
+    color: var(--text-color);
+    font-weight: 600;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+thead th a:link,
+thead th a:visited {
+    color: var(--text-color);
+}
+
+thead th a:hover,
+thead th a:active {
+    color: var(--primary-color);
+}
+
+tbody tr {
+    transition: background-color 0.2s;
+}
+
+tbody tr:hover {
+    background-color: rgba(0, 113, 227, 0.05);
+}
+
+tbody td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.row1 {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.row2 {
+    background-color: rgba(249, 249, 251, 0.5);
+}
+
+/* 登录页面 */
+.login {
+    background-image: url('/static/images/bg-default.jpg');
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login #container {
+    background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+    backdrop-filter: blur(var(--acrylic-blur));
+    -webkit-backdrop-filter: blur(var(--acrylic-blur));
+    border-radius: var(--border-radius);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+    width: 400px;
+    max-width: 90%;
+}
+
+.login #header {
+    background: none;
+    box-shadow: none;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+    padding: 0 0 20px 0;
+}
+
+.login #content {
+    background: none;
+    box-shadow: none;
+    margin: 0;
+    padding: 0;
+}
+
+.login .form-row {
+    margin-bottom: 20px;
+}
+
+.login .form-row label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.login .submit-row {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.login .submit-row input {
+    width: 100%;
+    padding: 12px;
+}
+
+/* 自定义元素 */
+.help,
+.helptext {
+    color: var(--secondary-color);
+    font-size: 0.9rem;
+}
+
+.paginator {
+    margin: 20px 0;
+    font-size: 0.9rem;
+}
+
+.paginator a,
+.paginator .this-page {
+    padding: 5px 10px;
+    border-radius: var(--border-radius);
+    margin: 0 2px;
+}
+
+.paginator a {
+    background-color: rgba(255, 255, 255, 0.5);
+    transition: background-color 0.2s;
+}
+
+.paginator a:hover {
+    background-color: rgba(0, 113, 227, 0.1);
+}
+
+.paginator .this-page {
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 500;
+}
+
+/* 消息通知 */
+.messagelist {
+    padding: 0;
+    margin: 0 0 20px 0;
+    list-style: none;
+}
+
+.messagelist li {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+}
+
+.messagelist .success {
+    background-color: rgba(40, 167, 69, 0.1);
+    border-left: 4px solid var(--success-color);
+}
+
+.messagelist .warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    border-left: 4px solid var(--warning-color);
+}
+
+.messagelist .error {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-left: 4px solid var(--danger-color);
+}
+
+/* 过滤器 */
+.module.filtered {
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+#changelist-filter {
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: var(--border-radius);
+    padding: 15px;
+}
+
+#changelist-filter h2 {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    padding: 10px 15px;
+    margin-top: 0;
+}
+
+#changelist-filter ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+#changelist-filter li {
+    padding: 5px 0;
+}
+
+#changelist-filter a {
+    color: var(--text-color);
+    transition: color 0.2s;
+}
+
+#changelist-filter a:hover {
+    color: var(--primary-color);
+}
+
+#changelist-filter a.selected {
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+    .dashboard #content {
+        width: calc(100% - 20px);
+        margin: 10px;
+    }
+
+    #content-main,
+    #content-related {
+        width: 100%;
+        float: none;
+    }
+
+    #content-related {
+        margin-top: 20px;
+    }
+}
+
+@media (max-width: 767px) {
+    #header {
+        padding: 10px 20px;
+    }
+
+    #content {
+        padding: 10px;
+        margin: 10px;
+    }
+
+    .login #container {
+        padding: 20px;
+    }
+}

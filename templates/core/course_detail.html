@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ course.name }} <span class="course-code">({{ course.code }})</span></h1>
+    <div class="actions">
+        <a href="{% url 'admin:core_course_change' course.id %}" class="btn btn-primary">编辑</a>
+        <a href="{% url 'core:courses' %}" class="btn btn-secondary">返回列表</a>
+    </div>
+</div>
+
+<div class="course-details">
+    <div class="detail-section">
+        <h2>基本信息</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <label>课程名称</label>
+                <span>{{ course.name }}</span>
+            </div>
+            <div class="info-item">
+                <label>课程代码</label>
+                <span>{{ course.code }}</span>
+            </div>
+            <div class="info-item">
+                <label>学分</label>
+                <span>{{ course.credits }}</span>
+            </div>
+            <div class="info-item">
+                <label>教师</label>
+                <span>
+                    {% if course.teacher %}
+                        <a href="{% url 'admin:core_teacher_change' course.teacher.id %}">{{ course.teacher.name }}</a>
+                    {% else %}
+                        未分配
+                    {% endif %}
+                </span>
+            </div>
+            <div class="info-item">
+                <label>创建日期</label>
+                <span>{{ course.created_at|date:"Y年m月d日" }}</span>
+            </div>
+            <div class="info-item">
+                <label>学生人数</label>
+                <span>{{ enrollments|length }} 人</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="detail-section">
+        <div class="section-header">
+            <h2>选课学生</h2>
+            <a href="{% url 'admin:core_enrollment_add' %}" class="btn btn-sm btn-primary">添加学生</a>
+        </div>
+        
+        {% if enrollments %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>姓名</th>
+                        <th>学号</th>
+                        <th>性别</th>
+                        <th>班级</th>
+                        <th>选课日期</th>
+                        <th>成绩</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for enrollment in enrollments %}
+                    <tr>
+                        <td><a href="{% url 'core:student_detail' enrollment.student.id %}">{{ enrollment.student.name }}</a></td>
+                        <td>{{ enrollment.student.student_id }}</td>
+                        <td>{{ enrollment.student.gender }}</td>
+                        <td>
+                            {% if enrollment.student.assigned_class %}
+                                {{ enrollment.student.assigned_class.name }}
+                            {% else %}
+                                未分配
+                            {% endif %}
+                        </td>
+                        <td>{{ enrollment.enrollment_date|date:"Y年m月d日" }}</td>
+                        <td>
+                            {% if enrollment.grade != None %}
+                                {{ enrollment.grade }}
+                            {% else %}
+                                暂无成绩
+                            {% endif %}
+                        </td>
+                        <td class="actions">
+                            <div class="dropdown">
+                                <button class="dropdown-toggle">...</button>
+                                <div class="dropdown-menu">
+                                    <a href="{% url 'admin:core_enrollment_change' enrollment.id %}">编辑成绩</a>
+                                    <a href="{% url 'admin:core_enrollment_delete' enrollment.id %}" class="text-danger">移除学生</a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="empty-message">该课程尚未有学生选课。</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .course-code {
+        color: #666;
+        font-size: 0.8em;
+        font-weight: normal;
+    }
+    
+    .btn-primary {
+        background-color: #0070c9;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        margin-left: 10px;
+    }
+    
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 0.85rem;
+    }
+    
+    .btn-secondary {
+        background-color: #f5f5f7;
+        color: #333;
+        border: 1px solid #ddd;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #e5e5e7;
+    }
+    
+    .course-details {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .detail-section {
+        background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+        backdrop-filter: blur(var(--acrylic-blur));
+        -webkit-backdrop-filter: blur(var(--acrylic-blur));
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .section-header h2 {
+        margin: 0;
+    }
+    
+    .detail-section h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.2rem;
+        color: #333;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .info-item label {
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
+    
+    .info-item span {
+        font-size: 1rem;
+    }
+    
+    .empty-message {
+        text-align: center;
+        color: #666;
+        padding: 20px;
+    }
+    
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #e5e5e5;
+    }
+    
+    .data-table thead th {
+        background-color: #f5f5f7;
+        color: #333;
+        font-weight: 600;
+    }
+    
+    .data-table tbody tr:hover {
+        background-color: #f9f9f9;
+    }
+    
+    a {
+        color: #0070c9;
+        text-decoration: none;
+    }
+    
+    a:hover {
+        text-decoration: underline;
+    }
+    
+    .text-danger {
+        color: #ff3b30;
+    }
+    
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .dropdown-toggle {
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+        backdrop-filter: blur(var(--acrylic-blur));
+        -webkit-backdrop-filter: blur(var(--acrylic-blur));
+        min-width: 120px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        z-index: 1500;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    
+    .dropdown-menu a {
+        color: var(--text-color);
+        padding: 8px 12px;
+        text-decoration: none;
+        display: block;
+        transition: background-color 0.2s;
+    }
+    
+    .dropdown-menu a:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .dropdown:hover .dropdown-menu {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化下拉菜单
+        const dropdowns = document.querySelectorAll('.dropdown-toggle');
+        
+        dropdowns.forEach(dropdown => {
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menu = this.nextElementSibling;
+                const isVisible = menu.style.display === 'block';
+                
+                // 隐藏所有菜单
+                document.querySelectorAll('.dropdown-menu').forEach(m => {
+                    m.style.display = 'none';
+                });
+                
+                // 如果之前不可见，则显示当前菜单
+                if (!isVisible) {
+                    menu.style.display = 'block';
+                }
+            });
+        });
+        
+        // 点击页面其他位置时关闭菜单
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        });
+    });
+</script>
+{% endblock %} 

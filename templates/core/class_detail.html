@@ -1,0 +1,803 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ class.name }} <span class="class-year">{% if class.year %}({{ class.year }}){% endif %}</span></h1>
+    <div class="actions">
+        <a href="{% url 'admin:core_class_change' class.id %}" class="btn btn-primary">编辑</a>
+        <a href="{% url 'core:classes' %}" class="btn btn-secondary">返回列表</a>
+    </div>
+</div>
+
+<div class="class-details">
+    <div class="detail-section">
+        <h2>基本信息</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <label>班级名称</label>
+                <span>{{ class.name }}</span>
+            </div>
+            <div class="info-item">
+                <label>年份</label>
+                <span>{% if class.year %}{{ class.year }}{% else %}未设置{% endif %}</span>
+            </div>
+            <div class="info-item">
+                <label>学生人数</label>
+                <span>{{ total_students }} 人</span>
+            </div>
+        </div>
+        
+        {% if class.description %}
+        <div class="description-section">
+            <h3>班级描述</h3>
+            <div class="description-content">
+                {{ class.description }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="detail-section">
+        <div class="section-header">
+            <h2>班级学生 ({{ students_with_courses|length }}/{{ total_students }})</h2>
+            <div class="action-buttons">
+                <a href="{% url 'admin:core_student_add' %}" class="btn btn-sm btn-primary">添加学生</a>
+                
+                {% if students_with_courses %}
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-secondary dropdown-toggle-btn">批量操作</button>
+                    <div class="dropdown-menu">
+                        <a href="#" onclick="showBatchAddCoursesModal(); return false;">为所选学生添加课程</a>
+                        <a href="#" onclick="showBatchRemoveCoursesModal(); return false;">从所选学生中移除课程</a>
+                        <a href="#" onclick="confirmBatchDelete(); return false;" class="text-danger">删除所选学生</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="search-container">
+            <form method="get" action="{% url 'core:class_detail' class.id %}" id="student-search-form">
+                <div class="search-box">
+                    <input type="text" name="search_term" placeholder="搜索学生..." value="{{ search_term|default:'' }}">
+                    <button type="submit" class="search-button">搜索</button>
+                </div>
+                <div class="filter-controls">
+                    <button type="button" class="btn btn-secondary" onclick="resetSearch()">重置搜索</button>
+                </div>
+            </form>
+        </div>
+        
+        {% if students_with_courses %}
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="select-all" onchange="toggleAllCheckboxes()">
+                        </th>
+                        <th>姓名</th>
+                        <th>学号</th>
+                        <th>性别</th>
+                        <th>年龄</th>
+                        <th>选修课程</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in students_with_courses %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="student-checkbox" value="{{ item.student.id }}">
+                        </td>
+                        <td><a href="{% url 'core:student_detail' item.student.id %}">{{ item.student.name }}</a></td>
+                        <td>{{ item.student.student_id }}</td>
+                        <td>{{ item.student.gender }}</td>
+                        <td>{{ item.student.age }}</td>
+                        <td class="courses-cell">
+                            {% for enrollment in item.enrollments %}
+                            <span class="course-badge">{{ enrollment.course.name }}</span>
+                            {% empty %}
+                            <span class="no-course">未选课程</span>
+                            {% endfor %}
+                        </td>
+                        <td class="actions">
+                            <div class="dropdown">
+                                <button class="dropdown-toggle">...</button>
+                                <div class="dropdown-menu">
+                                    <a href="{% url 'core:student_detail' item.student.id %}">查看详情</a>
+                                    <a href="{% url 'admin:core_student_change' item.student.id %}">编辑信息</a>
+                                    <a href="#" onclick="showManageCoursesModal({{ item.student.id }}, '{{ item.student.name }}'); return false;">管理课程</a>
+                                    <a href="{% url 'admin:core_student_delete' item.student.id %}" class="text-danger">删除学生</a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <p>{% if search_term %}没有找到匹配的学生。{% else %}该班级暂无学生。{% endif %}</p>
+            {% if search_term %}
+            <p>尝试使用不同的搜索条件，或者<a href="{% url 'core:class_detail' class.id %}">查看所有学生</a>。</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 批量添加课程模态框 -->
+<div id="batch-add-courses-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>为所选学生添加课程</h3>
+            <span class="close" onclick="closeBatchAddCoursesModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p id="selected-students-count"></p>
+            <form id="batch-add-courses-form">
+                <div class="form-group">
+                    <label for="course-select">选择要添加的课程：</label>
+                    <select id="course-select" multiple>
+                        <!-- 课程选项将通过AJAX加载 -->
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeBatchAddCoursesModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">添加课程</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 批量移除课程模态框 -->
+<div id="batch-remove-courses-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>从所选学生中移除课程</h3>
+            <span class="close" onclick="closeBatchRemoveCoursesModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p id="remove-selected-students-count"></p>
+            <form id="batch-remove-courses-form">
+                <div class="form-group">
+                    <label for="remove-course-select">选择要移除的课程：</label>
+                    <select id="remove-course-select" multiple>
+                        <!-- 课程选项将通过AJAX加载 -->
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeBatchRemoveCoursesModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">移除课程</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 管理单个学生课程模态框 -->
+<div id="manage-courses-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>管理学生课程</h3>
+            <span class="close" onclick="closeManageCoursesModal()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p id="student-name"></p>
+            <form id="manage-courses-form">
+                <input type="hidden" id="student-id">
+                <div class="form-group">
+                    <label for="student-courses">选择课程：</label>
+                    <div id="course-checkboxes">
+                        <!-- 课程复选框将通过AJAX加载 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeManageCoursesModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存更改</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .class-year {
+        color: #666;
+        font-size: 0.8em;
+        font-weight: normal;
+    }
+    
+    .btn-primary {
+        background-color: #0070c9;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        margin-left: 10px;
+    }
+    
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 0.85rem;
+    }
+    
+    .btn-secondary {
+        background-color: #f5f5f7;
+        color: #333;
+        border: 1px solid #ddd;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #e5e5e7;
+    }
+    
+    .class-details {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .detail-section {
+        background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+        backdrop-filter: blur(var(--acrylic-blur));
+        -webkit-backdrop-filter: blur(var(--acrylic-blur));
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .section-header h2 {
+        margin: 0;
+    }
+    
+    .detail-section h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.2rem;
+        color: #333;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .info-item label {
+        font-weight: 500;
+        color: #666;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+    }
+    
+    .info-item span {
+        font-size: 1rem;
+    }
+    
+    .description-section {
+        margin-top: 20px;
+    }
+    
+    .description-section h3 {
+        font-size: 1rem;
+        color: #666;
+        margin-bottom: 10px;
+    }
+    
+    .description-content {
+        line-height: 1.6;
+    }
+    
+    .search-container {
+        margin-bottom: 20px;
+    }
+    
+    .search-box {
+        display: flex;
+        max-width: 400px;
+        margin-bottom: 15px;
+    }
+    
+    .search-box input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px 0 0 6px;
+        font-size: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .search-button {
+        background-color: #0070c9;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 0 6px 6px 0;
+        cursor: pointer;
+    }
+    
+    .filter-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .dropdown-toggle-btn {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+    
+    .dropdown-toggle-btn::after {
+        content: '';
+        display: inline-block;
+        margin-left: 5px;
+        border: 5px solid transparent;
+        border-top-color: #333;
+    }
+    
+    .dropdown-toggle {
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+        backdrop-filter: blur(var(--acrylic-blur));
+        -webkit-backdrop-filter: blur(var(--acrylic-blur));
+        min-width: 120px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        z-index: 1500;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    
+    .dropdown-menu a {
+        color: var(--text-color);
+        padding: 8px 12px;
+        text-decoration: none;
+        display: block;
+        transition: background-color 0.2s;
+    }
+    
+    .dropdown-menu a:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .dropdown:hover .dropdown-menu {
+        display: block;
+    }
+    
+    .text-danger {
+        color: #dc3545;
+    }
+    
+    .courses-cell {
+        max-width: 300px;
+    }
+    
+    .course-badge {
+        display: inline-block;
+        background-color: #0070c9;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .no-course {
+        color: #999;
+        font-style: italic;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+    
+    /* 模态框样式 */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-content {
+        background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+        backdrop-filter: blur(var(--acrylic-blur));
+        -webkit-backdrop-filter: blur(var(--acrylic-blur));
+        width: 90%;
+        max-width: 600px;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .modal-header h3 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+    
+    .close {
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        color: #777;
+    }
+    
+    .modal-body {
+        padding: 20px;
+    }
+    
+    .modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+    
+    select[multiple] {
+        width: 100%;
+        height: 150px;
+        padding: 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    #course-checkboxes {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 10px;
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .checkbox-item input {
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化下拉菜单
+        initDropdowns();
+    });
+    
+    // 下拉菜单初始化
+    function initDropdowns() {
+        const dropdownToggles = document.querySelectorAll('.dropdown-toggle, .dropdown-toggle-btn');
+        
+        dropdownToggles.forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menu = this.nextElementSibling;
+                
+                // 关闭所有其他菜单
+                document.querySelectorAll('.dropdown-menu').forEach(m => {
+                    if (m !== menu) {
+                        m.style.display = 'none';
+                    }
+                });
+                
+                // 切换当前菜单
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            });
+        });
+        
+        // 点击其他地方关闭菜单
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        });
+    }
+    
+    // 重置搜索
+    function resetSearch() {
+        window.location.href = "{% url 'core:class_detail' class.id %}";
+    }
+    
+    // 切换所有复选框
+    function toggleAllCheckboxes() {
+        const checkAll = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.student-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checkAll.checked;
+        });
+    }
+    
+    // 获取所选学生ID
+    function getSelectedStudentIds() {
+        const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+        return Array.from(checkboxes).map(checkbox => checkbox.value);
+    }
+    
+    // 批量添加课程模态框
+    function showBatchAddCoursesModal() {
+        const selectedIds = getSelectedStudentIds();
+        if (selectedIds.length === 0) {
+            alert('请至少选择一名学生');
+            return;
+        }
+        
+        document.getElementById('selected-students-count').textContent = `已选择 ${selectedIds.length} 名学生`;
+        
+        // 这里应该有AJAX加载课程选项的代码
+        // 模拟加载课程选项
+        const courseSelect = document.getElementById('course-select');
+        courseSelect.innerHTML = '';
+        
+        // 添加一些模拟的课程选项
+        const courses = [
+            { id: 1, name: '数学' },
+            { id: 2, name: '语文' },
+            { id: 3, name: '英语' },
+            { id: 4, name: '物理' },
+            { id: 5, name: '化学' }
+        ];
+        
+        courses.forEach(course => {
+            const option = document.createElement('option');
+            option.value = course.id;
+            option.textContent = course.name;
+            courseSelect.appendChild(option);
+        });
+        
+        // 显示模态框
+        const modal = document.getElementById('batch-add-courses-modal');
+        modal.style.display = 'flex';
+        
+        // 表单提交处理
+        document.getElementById('batch-add-courses-form').onsubmit = function(e) {
+            e.preventDefault();
+            
+            // 获取选中的课程
+            const selectedCourses = Array.from(courseSelect.selectedOptions).map(option => option.value);
+            if (selectedCourses.length === 0) {
+                alert('请至少选择一门课程');
+                return;
+            }
+            
+            // 这里应该有AJAX处理添加课程的代码
+            // 模拟处理
+            alert(`将为 ${selectedIds.length} 名学生添加 ${selectedCourses.length} 门课程`);
+            
+            // 关闭模态框
+            closeBatchAddCoursesModal();
+        };
+    }
+    
+    function closeBatchAddCoursesModal() {
+        document.getElementById('batch-add-courses-modal').style.display = 'none';
+    }
+    
+    // 批量移除课程模态框
+    function showBatchRemoveCoursesModal() {
+        const selectedIds = getSelectedStudentIds();
+        if (selectedIds.length === 0) {
+            alert('请至少选择一名学生');
+            return;
+        }
+        
+        document.getElementById('remove-selected-students-count').textContent = `已选择 ${selectedIds.length} 名学生`;
+        
+        // 这里应该有AJAX加载课程选项的代码
+        // 模拟加载课程选项
+        const courseSelect = document.getElementById('remove-course-select');
+        courseSelect.innerHTML = '';
+        
+        // 添加一些模拟的课程选项
+        const courses = [
+            { id: 1, name: '数学' },
+            { id: 2, name: '语文' },
+            { id: 3, name: '英语' },
+            { id: 4, name: '物理' },
+            { id: 5, name: '化学' }
+        ];
+        
+        courses.forEach(course => {
+            const option = document.createElement('option');
+            option.value = course.id;
+            option.textContent = course.name;
+            courseSelect.appendChild(option);
+        });
+        
+        // 显示模态框
+        const modal = document.getElementById('batch-remove-courses-modal');
+        modal.style.display = 'flex';
+        
+        // 表单提交处理
+        document.getElementById('batch-remove-courses-form').onsubmit = function(e) {
+            e.preventDefault();
+            
+            // 获取选中的课程
+            const selectedCourses = Array.from(courseSelect.selectedOptions).map(option => option.value);
+            if (selectedCourses.length === 0) {
+                alert('请至少选择一门课程');
+                return;
+            }
+            
+            // 这里应该有AJAX处理移除课程的代码
+            // 模拟处理
+            alert(`将从 ${selectedIds.length} 名学生中移除 ${selectedCourses.length} 门课程`);
+            
+            // 关闭模态框
+            closeBatchRemoveCoursesModal();
+        };
+    }
+    
+    function closeBatchRemoveCoursesModal() {
+        document.getElementById('batch-remove-courses-modal').style.display = 'none';
+    }
+    
+    // 批量删除确认
+    function confirmBatchDelete() {
+        const selectedIds = getSelectedStudentIds();
+        if (selectedIds.length === 0) {
+            alert('请至少选择一名学生');
+            return;
+        }
+        
+        if (confirm(`确定要删除选中的 ${selectedIds.length} 名学生吗？此操作不可撤销。`)) {
+            // 这里应该有AJAX处理批量删除的代码
+            // 模拟处理
+            alert(`将删除 ${selectedIds.length} 名学生`);
+        }
+    }
+    
+    // 管理单个学生课程
+    function showManageCoursesModal(studentId, studentName) {
+        document.getElementById('student-id').value = studentId;
+        document.getElementById('student-name').textContent = `学生：${studentName}`;
+        
+        // 这里应该有AJAX加载学生已选课程的代码
+        // 模拟加载课程选项
+        const coursesContainer = document.getElementById('course-checkboxes');
+        coursesContainer.innerHTML = '';
+        
+        // 添加一些模拟的课程选项
+        const courses = [
+            { id: 1, name: '数学', enrolled: true },
+            { id: 2, name: '语文', enrolled: false },
+            { id: 3, name: '英语', enrolled: true },
+            { id: 4, name: '物理', enrolled: false },
+            { id: 5, name: '化学', enrolled: true }
+        ];
+        
+        courses.forEach(course => {
+            const div = document.createElement('div');
+            div.className = 'checkbox-item';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.value = course.id;
+            checkbox.id = `course-${course.id}`;
+            checkbox.checked = course.enrolled;
+            
+            const label = document.createElement('label');
+            label.htmlFor = `course-${course.id}`;
+            label.textContent = course.name;
+            
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            coursesContainer.appendChild(div);
+        });
+        
+        // 显示模态框
+        const modal = document.getElementById('manage-courses-modal');
+        modal.style.display = 'flex';
+        
+        // 表单提交处理
+        document.getElementById('manage-courses-form').onsubmit = function(e) {
+            e.preventDefault();
+            
+            // 获取选中的课程
+            const checkboxes = coursesContainer.querySelectorAll('input[type="checkbox"]:checked');
+            const selectedCourses = Array.from(checkboxes).map(checkbox => checkbox.value);
+            
+            // 这里应该有AJAX处理更新课程的代码
+            // 模拟处理
+            alert(`已更新学生 ${studentName} 的课程`);
+            
+            // 关闭模态框
+            closeManageCoursesModal();
+        };
+    }
+    
+    function closeManageCoursesModal() {
+        document.getElementById('manage-courses-modal').style.display = 'none';
+    }
+</script>
+{% endblock %} 

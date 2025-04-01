@@ -1,0 +1,338 @@
+{% extends 'base.html' %}
+
+{% block title %}学生列表 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>学生列表</h1>
+    <div class="actions">
+        <a href="{% url 'admin:core_student_add' %}" class="btn btn-primary">添加学生</a>
+    </div>
+</div>
+
+<div class="filters-container">
+    <div class="search-container">
+        <form method="get" action="{% url 'core:students' %}" id="student-filter-form">
+            <div class="search-box">
+                <input type="text" name="search_term" placeholder="搜索学生..." value="{{ search_term|default:'' }}">
+                <button type="submit" class="search-button">搜索</button>
+            </div>
+            
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label for="gender_filter">性别:</label>
+                    <select name="gender" id="gender_filter" onchange="this.form.submit()">
+                        <option value="" {% if not gender %}selected{% endif %}>全部</option>
+                        <option value="男" {% if gender == '男' %}selected{% endif %}>男</option>
+                        <option value="女" {% if gender == '女' %}selected{% endif %}>女</option>
+                        <option value="其他" {% if gender == '其他' %}selected{% endif %}>其他</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="class_filter">班级:</label>
+                    <select name="class_id" id="class_filter" onchange="this.form.submit()">
+                        <option value="" {% if not class_id %}selected{% endif %}>全部</option>
+                        {% for class_obj in all_classes %}
+                            <option value="{{ class_obj.id }}" {% if class_id == class_obj.id|stringformat:"i" %}selected{% endif %}>
+                                {{ class_obj.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="course_filter">课程:</label>
+                    <select name="course_id" id="course_filter" onchange="this.form.submit()">
+                        <option value="" {% if not course_id %}selected{% endif %}>全部</option>
+                        {% for course in all_courses %}
+                            <option value="{{ course.id }}" {% if course_id == course.id|stringformat:"i" %}selected{% endif %}>
+                                {{ course.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="button" class="btn btn-secondary" onclick="resetFilters()">重置筛选</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if students %}
+<div class="table-responsive">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>姓名</th>
+                <th>学号</th>
+                <th>性别</th>
+                <th>年龄</th>
+                <th>班级</th>
+                <th>课程</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.name }}</td>
+                <td>{{ student.student_id }}</td>
+                <td>{{ student.gender }}</td>
+                <td>{{ student.age }}</td>
+                <td>
+                    {% if student.assigned_class %}
+                        <a href="{% url 'admin:core_class_change' student.assigned_class.id %}">{{ student.assigned_class.name }}</a>
+                    {% else %}
+                        未分配
+                    {% endif %}
+                </td>
+                <td>
+                    {% if student.courses.all %}
+                        {% for course in student.courses.all %}
+                            <span class="course-badge">{{ course.name }}</span>
+                        {% endfor %}
+                    {% else %}
+                        未选课
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    <div class="dropdown">
+                        <button class="dropdown-toggle">...</button>
+                        <div class="dropdown-menu">
+                            <a href="{% url 'core:student_detail' student.id %}">查看详情</a>
+                            <a href="{% url 'admin:core_student_change' student.id %}">编辑</a>
+                            <a href="{% url 'admin:core_student_delete' student.id %}">删除</a>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% include "core/includes/pagination.html" with page_obj=page_obj %}
+
+{% else %}
+<div class="empty-state">
+    <p>没有找到学生记录。</p>
+    {% if search_term or gender or class_id or course_id %}
+        <p>尝试更改或重置筛选条件。</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .course-badge {
+        display: inline-block;
+        background-color: #0070c9;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .dropdown-toggle {
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+        backdrop-filter: blur(var(--acrylic-blur));
+        -webkit-backdrop-filter: blur(var(--acrylic-blur));
+        min-width: 120px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        z-index: 1500;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    
+    .dropdown-menu a {
+        color: var(--text-color);
+        padding: 8px 12px;
+        text-decoration: none;
+        display: block;
+        transition: background-color 0.2s;
+    }
+    
+    .dropdown-menu a:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .dropdown:hover .dropdown-menu {
+        display: block;
+    }
+    
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .btn-primary {
+        background-color: #0070c9;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .btn-secondary {
+        background-color: #f5f5f7;
+        color: #333;
+        border: 1px solid #ddd;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #e5e5e7;
+    }
+    
+    .filters-container {
+        margin-bottom: 20px;
+        background-color: rgba(255, 255, 255, var(--acrylic-opacity));
+        backdrop-filter: blur(var(--acrylic-blur));
+        -webkit-backdrop-filter: blur(var(--acrylic-blur));
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .search-container {
+        margin-bottom: 0;
+    }
+    
+    .search-box {
+        display: flex;
+        max-width: 400px;
+        margin-bottom: 15px;
+    }
+    
+    .search-box input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px 0 0 6px;
+        font-size: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .search-button {
+        background-color: #0070c9;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 0 6px 6px 0;
+        cursor: pointer;
+    }
+    
+    .filter-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .filter-group label {
+        font-weight: 500;
+        color: #555;
+        white-space: nowrap;
+    }
+    
+    .filter-group select {
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid #e0e0e0;
+        background-color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化下拉菜单
+        const dropdowns = document.querySelectorAll('.dropdown-toggle');
+        
+        dropdowns.forEach(dropdown => {
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const menu = this.nextElementSibling;
+                const isVisible = menu.style.display === 'block';
+                
+                // 隐藏所有菜单
+                document.querySelectorAll('.dropdown-menu').forEach(m => {
+                    m.style.display = 'none';
+                });
+                
+                // 如果之前不可见，则显示当前菜单
+                if (!isVisible) {
+                    menu.style.display = 'block';
+                }
+            });
+        });
+        
+        // 点击页面其他位置时关闭菜单
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+        });
+    });
+    
+    // 重置筛选
+    function resetFilters() {
+        const form = document.getElementById('student-filter-form');
+        const searchInput = form.querySelector('input[name="search_term"]');
+        const searchValue = searchInput.value;
+        
+        // 重置表单并保持搜索词
+        form.reset();
+        searchInput.value = searchValue;
+        
+        // 重置所有筛选器下拉框
+        form.querySelector('#gender_filter').value = '';
+        form.querySelector('#class_filter').value = '';
+        form.querySelector('#course_filter').value = '';
+        
+        // 提交表单
+        form.submit();
+    }
+</script>
+{% endblock %} 

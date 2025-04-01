@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}首页 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<h1>欢迎来到学生管理系统</h1>
+<p>这是学生管理系统的首页。在这里您可以查看系统的基本统计信息。</p>
+<div class="dashboard-widgets">
+    <div class="widget">
+        <h2>学生统计</h2>
+        <p>将在后续实现展示学生总数</p>
+    </div>
+    <div class="widget">
+        <h2>教师统计</h2>
+        <p>将在后续实现展示教师总数</p>
+    </div>
+    <div class="widget">
+        <h2>课程统计</h2>
+        <p>将在后续实现展示课程总数</p>
+    </div>
+    <div class="widget">
+        <h2>班级统计</h2>
+        <p>将在后续实现展示班级总数</p>
+    </div>
+</div>
+{% endblock %} 

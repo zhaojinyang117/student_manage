@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}课程列表 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<h1>课程列表</h1>
+<p>这里将显示所有课程的列表。</p>
+<div class="search-container">
+    <form method="get" action="{% url 'core:courses' %}">
+        <input type="text" name="search_term" placeholder="搜索课程..." />
+        <button type="submit">搜索</button>
+    </form>
+</div>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>课程名称</th>
+            <th>课程代码</th>
+            <th>教师</th>
+            <th>描述</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td colspan="5">将在后续实现课程列表数据</td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %} 

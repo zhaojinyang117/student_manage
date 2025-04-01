@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}学生列表 - {{ block.super }}{% endblock %}
+
+{% block content %}
+<h1>学生列表</h1>
+<p>这里将显示所有学生的列表。</p>
+<div class="search-container">
+    <form method="get" action="{% url 'core:students' %}">
+        <input type="text" name="search_term" placeholder="搜索学生..." />
+        <button type="submit">搜索</button>
+    </form>
+</div>
+<div class="filter-container">
+    <p>这里将添加筛选控件</p>
+</div>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>姓名</th>
+            <th>学号</th>
+            <th>性别</th>
+            <th>年龄</th>
+            <th>班级</th>
+            <th>课程</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td colspan="7">将在后续实现学生列表数据</td>
+        </tr>
+    </tbody>
+</table>
+{% endblock %} 

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}学生管理系统{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="loading-bar"></div>
+    
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="navbar-brand">学生管理系统</a>
+            
+            <button class="navbar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="navbar-links">
+                <a href="/" {% if request.path == '/' %}class="active"{% endif %}>
+                    <i class="fas fa-home"></i> 首页
+                </a>
+                <a href="/students/" {% if request.path == '/students/' %}class="active"{% endif %}>
+                    <i class="fas fa-user-graduate"></i> 学生
+                </a>
+                <a href="/courses/" {% if request.path == '/courses/' %}class="active"{% endif %}>
+                    <i class="fas fa-book"></i> 课程
+                </a>
+                <a href="/classes/" {% if request.path == '/classes/' %}class="active"{% endif %}>
+                    <i class="fas fa-users"></i> 班级
+                </a>
+                <a href="/admin/" target="_blank">
+                    <i class="fas fa-cog"></i> 管理
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 主体内容 -->
+    <div class="container page-transition">
+        {% block content %}{% endblock %}
+    </div>
+    
+    <!-- 页脚 -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-copyright">
+                © {% now "Y" %} 学生管理系统 - 版权所有
+            </div>
+            <div class="footer-links">
+                <a href="/">首页</a>
+                <a href="/admin/" target="_blank">管理</a>
+                <a href="#">关于</a>
+                <a href="#">帮助</a>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Toast通知容器 -->
+    <div class="toast-container"></div>
+    
+    <script src="/static/js/main.js"></script>
+    {% block extra_js %}{% endblock %}
+    
+    <script>
+    // 显示页面内容（页面过渡效果）
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            document.querySelector('.container').classList.add('show');
+        }, 100);
+    });
+    </script>
+</body>
+</html> 
